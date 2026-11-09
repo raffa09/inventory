@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Stok Barang</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stock-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-aman { background: #d1fae5; color: #065f46; }
+        .badge-menipis { background: #fef3c7; color: #92400e; }
+        .badge-habis { background: #fee2e2; color: #991b1b; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-list li {
+            font-size: 0.85rem;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📦 Manajemen Stok Barang</h1>
+            <p>Sistem Web dengan Riwayat Terpisah</p>
+        </header>
+
+        <div class="grid">
+            <!-- Kolom Kiri: Daftar Stok -->
+            <div class="card">
+                <h2>Daftar Stok Barang</h2>
+                <div id="daftar-stok"></div>
+            </div>
+
+            <!-- Kolom Kanan: Form Aksi -->
+            <div class="card">
+                <h2>Form Transaksi & Barang</h2>
+                <div class="form-group">
+                    <label>Pilih Aksi</label>
+                    <select id="pilih-aksi" onchange="ubahForm()">
+                        <option value="jual">Jual Barang</option>
+                        <option value="restok">Restok Barang</option>
+                        <option value="tambah">Tambah Barang Baru</option>
+                    </select>
+                </div>
+                <div id="form-container"></div>
+            </div>
+        </div>
+
+        <!-- Bagian Bawah: 3 Kolom Riwayat Terpisah -->
+        <div class="grid-3">
+            <div class="card" style="border-top: 4px solid var(--success);">
+                <h2>🛒 Riwayat Penjualan</h2>
+                <ul class="history-list" id="riwayat-jual">
+                    <li>Belum ada penjualan.</li>
+                </ul>
+            </div>
+            <div class="card" style="border-top: 4px solid var(--warning);">
+                <h2>🔄 Riwayat Restok</h2>
+                <ul class="history-list" id="riwayat-restok">
+                    <li>Belum ada restok.</li>
+                </ul>
+            </div>
+            <div class="card" style="border-top: 4px solid var(--primary);">
+                <h2>✨ Barang Baru Ditambahkan</h2>
+                <ul class="history-list" id="riwayat-tambah">
+                    <li>Belum ada barang baru.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stokBarang = {
+            "Beras": { stok: 10, harga: 14000 },
+            "Minyak": { stok: 5, harga: 18000 },
+            "Gula": { stok: 0, harga: 16000 }
+        };
+
+        // Riwayat dipisah menjadi 3 array berbeda
+        let dataRiwayatJual = [];
+        let dataRiwayatRestok = [];
+        let dataRiwayatTambah = [];
+
+        const batasMenipis = 3;
+
+        function formatRupiah(angka) {
+            return "Rp" + angka.toLocaleString('id-ID');
+        }
+
+        function renderStok() {
+            const container = document.getElementById("daftar-stok");
+            container.innerHTML = "";
+
+            for (let [nama, info] of Object.entries(stokBarang)) {
+                let badgeClass = "badge-aman";
+                let badgeText = `${info.stok} pcs`;
+                
+                if (info.stok === 0) {
+                    badgeClass = "badge-habis";
+                    badgeText = "HABIS!";
+                } else if (info.stok <= batasMenipis) {
+                    badgeClass = "badge-menipis";
+                    badgeText = `${info.stok} pcs (Menipis)`;
+                }
+
+                container.innerHTML += `
+                    <div class="stock-item">
+                        <div>
+                            <strong>${nama}</strong><br>
+                            <small>${formatRupiah(info.harga)}</small>
+                        </div>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                `;
+            }
+            updateDropdownBarang();
+        }
+
+        function updateDropdownBarang() {
+            const selectBarang = document.getElementById("nama-barang");
+            if (selectBarang) {
+                selectBarang.innerHTML = "";
+                for (let nama of Object.keys(stokBarang)) {
+                    selectBarang.innerHTML += `<option value="${nama}">${nama}</option>`;
+                }
+            }
+        }
+
+        function ubahForm() {
+            const aksi = document.getElementById("pilih-aksi").value;
+            const container = document.getElementById("form-container");
+
+            if (aksi === "jual" || aksi === "restok") {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Nama Barang</label>
+                        <select id="nama-barang"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Jumlah</label>
+                        <input type="number" id="jumlah-barang" min="1" value="1">
+                    </div>
+                    <button onclick="prosesAksi('${aksi}')">Proses ${aksi.charAt(0).toUpperCase() + aksi.slice(1)}</button>
+                `;
+                updateDropdownBarang();
+            } else if (aksi === "tambah") {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Nama Barang Baru</label>
+                        <input type="text" id="nama-baru" placeholder="Contoh: Tepung">
+                    </div>
+                    <div class="form-group">
+                        <label>Stok Awal</label>
+                        <input type="number" id="stok-baru" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Satuan (Rp)</label>
+                        <input type="number" id="harga-baru" min="1" value="10000">
+                    </div>
+                    <button onclick="prosesTambahBarang()">Simpan Barang Baru</button>
+                `;
+            }
+        }
+
+        function renderRiwayat() {
+            const waktu = () => new Date().toLocaleTimeString('id-ID');
+
+            // Render Riwayat Jual
+            const elJual = document.getElementById("riwayat-jual");
+            elJual.innerHTML = dataRiwayatJual.length === 0 ? "<li>Belum ada penjualan.</li>" : 
+                dataRiwayatJual.map(item => `<li>[${item.waktu}] <b>${item.nama}</b>: -${item.jumlah} pcs (${formatRupiah(item.total)})</li>`).join("");
+
+            // Render Riwayat Restok
+            const elRestok = document.getElementById("riwayat-restok");
+            elRestok.innerHTML = dataRiwayatRestok.length === 0 ? "<li>Belum ada restok.</li>" : 
+                dataRiwayatRestok.map(item => `<li>[${item.waktu}] <b>${item.nama}</b>: +${item.jumlah} pcs</li>`).join("");
+
+            // Render Riwayat Barang Baru
+            const elTambah = document.getElementById("riwayat-tambah");
+            elTambah.innerHTML = dataRiwayatTambah.length === 0 ? "<li>Belum ada barang baru.</li>" : 
+                dataRiwayatTambah.map(item => `<li>[${item.waktu}] <b>${item.nama}</b> (Stok: ${item.stok}, Harga: ${formatRupiah(item.harga)})</li>`).join("");
+        }
+
+        function prosesAksi(aksi) {
+            const nama = document.getElementById("nama-barang").value;
+            const jumlah = parseInt(document.getElementById("jumlah-barang").value);
+            const waktuSekarang = new Date().toLocaleTimeString('id-ID');
+
+            if (isNaN(jumlah) || jumlah <= 0) {
+                alert("Masukkan jumlah yang valid!");
+                return;
+            }
+
+            if (aksi === "jual") {
+                if (jumlah > stokBarang[nama].stok) {
+                    alert(`Gagal! Stok ${nama} tidak cukup (sisa ${stokBarang[nama].stok} pcs).`);
+                    return;
+                }
+                stokBarang[nama].stok -= jumlah;
+                let totalHarga = jumlah * stokBarang[nama].harga;
+                
+                // Masuk ke array khusus jual
+                dataRiwayatJual.unshift({ waktu: waktuSekarang, nama: nama, jumlah: jumlah, total: totalHarga });
+                alert(`Berhasil menjual ${jumlah} pcs ${nama}!`);
+
+            } else if (aksi === "restok") {
+                stokBarang[nama].stok += jumlah;
+
+                // Masuk ke array khusus restok
+                dataRiwayatRestok.unshift({ waktu: waktuSekarang, nama: nama, jumlah: jumlah });
+                alert(`Berhasil merestok ${nama} sebanyak ${jumlah} pcs!`);
+            }
+
+            renderStok();
+            renderRiwayat();
+        }
+
+        function prosesTambahBarang() {
+            let nama = document.getElementById("nama-baru").value.trim();
+            nama = nama.charAt(0).toUpperCase() + nama.slice(1);
+            const stok = parseInt(document.getElementById("stok-baru").value);
+            const harga = parseInt(document.getElementById("harga-baru").value);
+            const waktuSekarang = new Date().toLocaleTimeString('id-ID');
+
+            if (!nama || stokBarang[nama]) {
+                alert("Nama barang kosong atau sudah ada di sistem!");
+                return;
+            }
+
+            if (isNaN(stok) || isNaN(harga) || stok < 0 || harga <= 0) {
+                alert("Stok tidak boleh negatif dan harga harus lebih dari 0!");
+                return;
+            }
+
+            stokBarang[nama] = { stok: stok, harga: harga };
+            
+            // Masuk ke array khusus tambah barang baru
+            dataRiwayatTambah.unshift({ waktu: waktuSekarang, nama: nama, stok: stok, harga: harga });
+            
+            alert(`Barang '${nama}' berhasil ditambahkan!`);
+            renderStok();
+            renderRiwayat();
+        }
+
+        // Inisialisasi awal
+        renderStok();
+        ubahForm();
+    </script>
+</body>
+</html>
